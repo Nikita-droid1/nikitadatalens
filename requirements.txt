@@ -1,0 +1,4 @@
+# Выгрузка из iiko и загрузка в Neon
+requests>=2.28.0
+python-dotenv>=1.0.0
+psycopg2-binary>=2.9.0

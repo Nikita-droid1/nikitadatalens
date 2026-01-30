@@ -1,0 +1,35 @@
+# Типы скидок по дням: iiko OLAP → Neon (discount_types_daily_iiko).
+# Ручной запуск или ежедневно в 05:00 МСК (02:00 UTC).
+
+name: ETL iiko Discount Types Daily
+
+on:
+  workflow_dispatch:
+    inputs:
+      date_from:
+        description: "DATE_FROM (YYYY-MM-DD). Пусто = вчера"
+        required: false
+      date_to:
+        description: "DATE_TO (YYYY-MM-DD). Пусто = сегодня"
+        required: false
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Run ETL Discount Types Daily
+        env:
+          IIKO_BASE_URL: ${{ secrets.IIKO_BASE_URL }}
+          IIKO_LOGIN: ${{ secrets.IIKO_LOGIN }}
+          IIKO_PASSWORD: ${{ secrets.IIKO_PASSWORD }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          DATE_FROM: ${{ github.event.inputs.date_from }}
+          DATE_TO: ${{ github.event.inputs.date_to }}
+        run: python -m etl.etl_iiko_discount_types_daily

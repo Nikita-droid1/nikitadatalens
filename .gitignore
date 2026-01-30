@@ -1,0 +1,16 @@
+# Секреты и локальные настройки
+.env
+.env.local
+*.env
+
+# Выгрузки и кэш
+iiko/api/out/
+*.json
+!**/docs/**/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.Python
