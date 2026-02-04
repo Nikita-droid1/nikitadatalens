@@ -34,39 +34,39 @@ def get_olap_report(
     
     base = os.environ["IIKO_BASE_URL"].rstrip("/")
     
-    # Формат даты для iiko API: "01.01.2026 0:00:00"
-    date_from_str = date_from.strftime("%d.%m.%Y %H:%M:%S")
-    date_to_str = date_to.strftime("%d.%m.%Y %H:%M:%S")
+    # Убеждаемся, что date_from - начало дня, date_to - конец дня
+    date_from_start = date_from.replace(hour=0, minute=0, second=0, microsecond=0)
+    date_to_end = date_to.replace(hour=23, minute=59, second=59, microsecond=0)
+    
+    # Формат даты для iiko API: "01.01.2026 0:00:00" и "01.01.2026 23:59:59"
+    date_from_str = date_from_start.strftime("%d.%m.%Y %H:%M:%S")
+    date_to_str = date_to_end.strftime("%d.%m.%Y %H:%M:%S")
     
     # Эндпоинт для получения OLAP отчета
-    # Точный формат может отличаться, нужно уточнить по документации
     url = f"{base}/resto/api/v2/reports/olap"
     
-    # Параметры запроса
-    params = {
-        "key": token,
+    # iiko Server API требует POST запрос с JSON телом
+    # Параметры в теле запроса
+    json_data = {
         "reportId": report_id,
         "dateFrom": date_from_str,
         "dateTo": date_to_str
     }
     
-    # Альтернативный вариант через POST с телом запроса
-    # Попробуем сначала GET, если не сработает - перейдем на POST
-    try:
-        resp = requests.get(url, params=params, timeout=60)
-        if resp.status_code == 405:  # Method Not Allowed - значит нужен POST
-            resp = requests.post(url, json={
-                "reportId": report_id,
-                "dateFrom": date_from_str,
-                "dateTo": date_to_str
-            }, params={"key": token}, timeout=60)
-    except requests.RequestException:
-        # Пробуем POST вариант
-        resp = requests.post(url, json={
-            "reportId": report_id,
-            "dateFrom": date_from_str,
-            "dateTo": date_to_str
-        }, params={"key": token}, timeout=60)
+    # Токен передается как query параметр key
+    params = {"key": token}
+    
+    # Выполняем POST запрос
+    resp = requests.post(url, json=json_data, params=params, timeout=60)
+    
+    # Если получили ошибку, выводим детали для диагностики
+    if resp.status_code != 200:
+        error_detail = resp.text[:500] if resp.text else "Нет деталей ошибки"
+        raise requests.HTTPError(
+            f"{resp.status_code} {resp.reason} для url: {resp.url}\n"
+            f"Детали: {error_detail}\n"
+            f"Параметры запроса: reportId={report_id}, dateFrom={date_from_str}, dateTo={date_to_str}"
+        )
     
     resp.raise_for_status()
     return resp.json()
