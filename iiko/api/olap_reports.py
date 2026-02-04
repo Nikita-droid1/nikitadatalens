@@ -97,7 +97,7 @@ def get_margin_report(
         report_id="906ba511-1717-485c-aa60-2b47d03c49ec",
         date_from=date_from,
         date_to=date_to,
-        report_name="Маржа",
+        report_name="Маржа (выручка, % скидки, % себестоимости)",
         token=token
     )
 
@@ -135,7 +135,7 @@ def get_load_revenue_report(
         report_id="6c37631c-5cc5-4644-b25e-3411a3492e37",
         date_from=date_from,
         date_to=date_to,
-        report_name="Нагрузка по часам (выручка)",
+        report_name="нагрузка по часам (выручка)",
         token=token
     )
 
@@ -154,6 +154,6 @@ def get_discount_types_report(
         report_id="8ac9c323-034e-4b21-9eb6-60de5e05fbea",
         date_from=date_from,
         date_to=date_to,
-        report_name="Типы скидок",
+        report_name="Типы скидок (data lens)",
         token=token
     )
