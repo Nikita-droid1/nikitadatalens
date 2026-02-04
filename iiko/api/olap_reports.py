@@ -46,16 +46,18 @@ def get_olap_report(
     url = f"{base}/resto/api/v2/reports/olap"
     
     # iiko Server API требует POST запрос с JSON телом
-    # Согласно ошибке API, поле должно называться "id", а не "reportId"
-    # Также нужны поля dateFrom и dateTo
+    # Согласно ошибке API, в теле запроса только "id" отчета
+    # Даты передаются как query параметры
     json_data = {
-        "id": report_id,
+        "id": report_id
+    }
+    
+    # Токен и даты передаются как query параметры
+    params = {
+        "key": token,
         "dateFrom": date_from_str,
         "dateTo": date_to_str
     }
-    
-    # Токен передается как query параметр key
-    params = {"key": token}
     
     # Выполняем POST запрос
     resp = requests.post(url, json=json_data, params=params, timeout=60)
