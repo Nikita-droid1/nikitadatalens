@@ -1,38 +1,46 @@
-#!/usr/bin/env python3
 """
-Запуск постобработки: выполнение SQL из refresh_mart.sql в Neon.
-Переменная NEON_DATABASE_URL должна быть задана.
-Запуск: из корня дата-аналитика: python neon/transforms/run_transforms.py
+Запуск SQL трансформаций для обновления витрины данных.
 """
-
 import os
-import sys
+import psycopg2
+from dotenv import load_dotenv
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SQL_FILE = os.path.join(SCRIPT_DIR, "refresh_mart.sql")
 
-def main() -> None:
-    db_url = os.environ.get("NEON_DATABASE_URL")
-    if not db_url:
-        print("NEON_DATABASE_URL не задан.", file=sys.stderr)
-        sys.exit(1)
-    with open(SQL_FILE, "r", encoding="utf-8") as f:
+def run_transforms():
+    """Запустить SQL трансформации для обновления витрины."""
+    # Загружаем переменные окружения
+    load_dotenv()
+    
+    if not os.environ.get("NEON_DATABASE_URL"):
+        raise ValueError("NEON_DATABASE_URL не установлена")
+    
+    # Читаем SQL файл
+    sql_file = os.path.join(os.path.dirname(__file__), "refresh_mart.sql")
+    
+    with open(sql_file, "r", encoding="utf-8") as f:
         sql = f.read()
-    # Выполняем весь скрипт (один блок: CTE + INSERT)
-    block = sql.split("-- Вариант 2:")[0].strip() if "-- Вариант 2:" in sql else sql.strip()
-    if not block:
-        print("Нет выполняемого блока в refresh_mart.sql.", file=sys.stderr)
-        sys.exit(1)
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    conn.autocommit = True
+    
+    # Подключаемся к БД и выполняем SQL
+    conn = psycopg2.connect(os.environ["NEON_DATABASE_URL"])
+    cur = conn.cursor()
+    
     try:
-        with conn.cursor() as cur:
-            cur.execute(block)
-        print("Постобработка выполнена: mart_sales_by_day обновлена.")
+        print("🔄 Запуск трансформаций для обновления витрины данных...")
+        
+        # Выполняем SQL (может содержать несколько запросов)
+        cur.execute(sql)
+        conn.commit()
+        
+        print("✅ Трансформации выполнены успешно")
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Ошибка при выполнении трансформаций: {e}")
+        raise
     finally:
+        cur.close()
         conn.close()
 
 
 if __name__ == "__main__":
-    main()
+    run_transforms()

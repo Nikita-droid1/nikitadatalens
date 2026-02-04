@@ -1,0 +1,43 @@
+name: ETL (ручной запуск)
+
+on:
+  workflow_dispatch:  # Только ручной запуск через кнопку
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run ETL process
+        env:
+          IIKO_BASE_URL: ${{ secrets.IIKO_BASE_URL }}
+          IIKO_LOGIN: ${{ secrets.IIKO_LOGIN }}
+          IIKO_PASSWORD_SHA1: ${{ secrets.IIKO_PASSWORD_SHA1 }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+        run: |
+          python etl.py
+      
+      - name: Run transforms
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          python neon/transforms/run_transforms.py
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "ETL процесс завершился с ошибкой"

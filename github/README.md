@@ -1,40 +1,47 @@
-# GitHub: код и триггеры выгрузки
+# GitHub: код и автоматизация ETL
 
-**Назначение:** хранение кода выгрузки из iiko, ручной запуск выгрузки через Actions, настройка секретов.
+**Назначение:** автоматический ежедневный запуск ETL процесса через GitHub Actions.
 
-## Важно: секреты
+## Где хранятся учётные данные
 
-- Логины, пароли и API-ключи **не коммитить** в репозиторий.
-- Использовать **GitHub Secrets**: Settings → Secrets and variables → Actions.
-- В коде — только обращение к переменным окружения: `IIKO_BASE_URL`, `IIKO_LOGIN`, `IIKO_PASSWORD` или `IIKO_PASSWORD_SHA1`, `NEON_DATABASE_URL`.
+| Где | Файл/место | Когда нужны |
+|-----|-------------|-------------|
+| **Локально** | `.env` в корне проекта (не коммитится) | Запуск скриптов на своей машине |
+| **GitHub Actions** | Settings → Secrets and variables → Actions | Автоматический запуск workflow (ETL, выгрузка) |
+
+**Напоминание:** при настройке GitHub Actions добавь в Secrets: `IIKO_BASE_URL`, `IIKO_LOGIN`, `IIKO_PASSWORD_SHA1`. Значения бери из своего локального `.env`.
 
 ## Workflow
 
-- В корне дата-аналитика: **.github/workflows/export-iiko.yml** — ручная выгрузка по кнопке (workflow_dispatch).
-- Копия для справки: **workflows/export-iiko.yml**.
-- Запуск: GitHub → Actions → «Export iiko to Neon» → Run workflow.
-- Если корень репозитория — не дата-аналитика, а родительская папка: скопировать export-iiko.yml в .github/workflows в корне репо и в шагах перейти в папку дата-аналитика (например `working-directory: Работа/дата-аналитика`).
+- **`.github/workflows/daily_etl.yml`** — ручной запуск ETL через кнопку
+- Запуск: GitHub → Actions → «ETL (ручной запуск)» → Run workflow → Run workflow
+- Автоматический запуск по расписанию отключен (только ручной запуск)
 
 ## Секреты для workflow
 
 | Секрет | Назначение |
 |--------|------------|
-| IIKO_BASE_URL | Базовый URL сервера iiko (например https://oreks-co.iiko.it:443) |
-| IIKO_LOGIN | Логин пользователя API |
-| IIKO_PASSWORD или IIKO_PASSWORD_SHA1 | Пароль в открытом виде или SHA1-хеш (зависит от сервера) |
-| NEON_DATABASE_URL | Connection string Neon (postgresql://user:password@host/db?sslmode=require) |
+| `IIKO_BASE_URL` | Базовый URL сервера iiko (например https://oreks-co.Iiko.it:443) |
+| `IIKO_LOGIN` | Логин пользователя API (UKK) |
+| `IIKO_PASSWORD_SHA1` | SHA1-хеш пароля пользователя API |
+| `NEON_DATABASE_URL` | Connection string Neon (postgresql://user:password@host/db?sslmode=require) |
+| `GOOGLE_SHEETS_CREDENTIALS` | JSON credentials сервисного аккаунта Google (опционально, если не используется — загрузка из Google Sheets пропускается) |
 
-**Как заполнить секреты в GitHub**
+**Как добавить:** Репозиторий → Settings → Secrets and variables → Actions → New repository secret.
 
-1. Открой репозиторий → вкладка **Settings** → слева **Secrets and variables** → **Actions**.
-2. Нажми **New repository secret** и по очереди создай четыре секрета:
+## Что делает workflow
 
-| Имя секрета (вводить точно) | Значение (что вставить) |
-|-----------------------------|--------------------------|
-| **IIKO_BASE_URL** | Адрес сервера iiko, например `https://oreks-co.iiko.it:443` (без слэша в конце). |
-| **IIKO_LOGIN** | Логин пользователя API (тот же, что у коллеги в коде). |
-| **IIKO_PASSWORD** | Пароль в открытом виде (если сервер принимает обычный пароль, как у коллеги). Либо создай **IIKO_PASSWORD_SHA1** и вставь туда SHA1-хеш пароля — нужен только один из двух. |
-| **NEON_DATABASE_URL** | Строка подключения к Neon из консоли Neon: `postgresql://user:password@host/dbname?sslmode=require`. |
+1. Устанавливает Python и зависимости из `requirements.txt`
+2. Запускает `etl.py` — загружает данные из iiko API и Google Sheets в Neon
+3. Запускает `neon/transforms/run_transforms.py` — обновляет витрину данных с расчетом всех метрик
+4. При ошибке выводит сообщение (можно добавить уведомления)
 
-3. Имя секрета копируй из таблицы без пробелов; значение вставляй без кавычек. После сохранения значение не показывается — только звёздочки.
-4. Для выгрузки из iiko достаточно секретов IIKO_* и NEON_DATABASE_URL. После добавления запускай workflow: **Actions** → «Export iiko to Neon» → **Run workflow**.
+## Как запустить вручную
+
+1. Откройте репозиторий на GitHub
+2. Перейдите во вкладку **Actions**
+3. В списке слева выберите **"ETL (ручной запуск)"**
+4. Нажмите кнопку **"Run workflow"** (справа)
+5. Выберите ветку (обычно `main`) и нажмите **"Run workflow"**
+6. Дождитесь завершения (обычно 1-2 минуты)
+7. Проверьте логи на наличие ошибок

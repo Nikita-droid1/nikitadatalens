@@ -1,12 +1,13 @@
-# Документация проекта
+# Документация
 
 **Назначение:** справочные материалы по API и сервисам, используемым в дата-аналитике.
 
 ## Файлы
 
-- **iiko-server-api.md** — документация по iiko Server (Resto) API: авторизация (GET /resto/api/auth, логин + SHA1 пароля), лицензия, ссылки на ru.iiko.help и [iikophpserverapi.readme.io](https://iikophpserverapi.readme.io/docs). Используется при доработке [iiko/api/](../iiko/api/) и [neon/transforms/](../neon/transforms/).
+- **[iiko-server-api.md](iiko-server-api.md)** — работа с iiko Server (Resto) API: авторизация, эндпоинты, SHA1 пароля, лицензия, получение OLAP отчетов.
+- **[datalens_setup.md](datalens_setup.md)** — настройка DataLens: подключение к Neon, создание датасетов и дашборда с 15 метриками.
 
-## Связь с кодом
+## Связанные документы
 
-- Клиент и скрипты выгрузки: [iiko/api/](../iiko/api/) — авторизация и вызовы Resto API (эндпоинты уточняются по [iiko-server-api.md](iiko-server-api.md) и ru.iiko.help).
-- Постобработка: [neon/transforms/refresh_mart.sql](../neon/transforms/refresh_mart.sql) — разбор payload зависит от формата ответа iiko Server (Resto); при смене API адаптировать пути JSONB под реальный ответ.
+- **[../github/README.md](../github/README.md)** — работа с GitHub: секреты, Actions, workflow. **Учётные данные iiko:** локально в `.env`, для Actions — в GitHub Secrets.
+- **[../neon/README.md](../neon/README.md)** — работа с Neon: подключение, connection string, схема БД.

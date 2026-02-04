@@ -1,24 +1,78 @@
 # Neon: БД и постобработка
 
-**Назначение:** база данных Postgres в Neon для хранения выгрузок из iiko и витрин под визуализацию в DataLens.
+**Назначение:** база данных Postgres в Neon для хранения выгрузок из iiko Server API и Google Sheets, а также витрин под визуализацию в DataLens.
 
 ## Подключение
 
 - Connection string — только в GitHub Secrets и в настройках подключения DataLens, не в репозитории.
 - В коде и README указывать только имя переменной: `NEON_DATABASE_URL`.
+- Формат: `postgresql://user:password@host/db?sslmode=require`
 
 ## Структура
 
-- **schema/** — таблицы. Выполнить в Neon SQL Editor один раз при настройке:
-  - [001_initial.sql](schema/001_initial.sql) — iiko_raw_export (сырые JSONB), mart_sales_by_day (витрина).
-  - [002_margin_iiko.sql](schema/002_margin_iiko.sql) — маржа по дням/департаментам (заполняется ETL margin).
-  - [003_load_hourly_iiko.sql](schema/003_load_hourly_iiko.sql) — нагрузка по часам (заполняется ETL load_hourly).
-  - [004_discount_types_daily_iiko.sql](schema/004_discount_types_daily_iiko.sql) — типы скидок по дням (заполняется ETL discount_types).
-- **transforms/** — [refresh_mart.sql](transforms/refresh_mart.sql) заполняет mart_sales_by_day из iiko_raw_export; [run_transforms.py](transforms/run_transforms.py) запускает этот SQL.
-- Таблицы margin_iiko, load_hourly_iiko, discount_types_daily_iiko заполняются скриптами из **etl/** (см. корневой README и .github/workflows/).
+### Схема БД (`schema/`)
+
+- **001_iiko_raw.sql** — таблицы для сырых данных из iiko Server API:
+  - `iiko_raw_margin` — отчет "Маржа" (выручка, % скидки, % себестоимости)
+  - `iiko_raw_load_orders` — отчет "Нагрузка по часам (заказы)"
+  - `iiko_raw_load_revenue` — отчет "Нагрузка по часам (выручка)"
+  - `iiko_raw_discount_types` — отчет "Типы скидок"
+
+- **002_sheets_raw.sql** — таблицы для сырых данных из Google Sheets:
+  - `sheets_raw_direct` — таблица "Директ" (рекламный бюджет + ФОТ директ)
+  - `sheets_raw_fot` — таблица ФОТ (курьеры, повара, уборщицы)
+
+- **003_mart.sql** — витрина данных для DataLens:
+  - `mart_daily_metrics` — ежедневные метрики (15 метрик)
+  - `mart_hourly_load` — нагрузка по часам (заказы и выручка)
+  - `mart_discount_types` — типы скидок с детализацией
+
+### Трансформации (`transforms/`)
+
+- **refresh_mart.sql** — SQL для расчета всех 15 метрик и заполнения витрины
+- **run_transforms.py** — Python скрипт для запуска трансформаций
 
 ## Порядок работы
 
-1. Скрипты из `iiko/api/` загружают сырые данные в iiko_raw_export.
-2. Запуск постобработки: `python neon/transforms/run_transforms.py` (или из GitHub Action).
-3. DataLens подключается к Neon и строит датасеты и дашборды по mart_sales_by_day и при необходимости по iiko_raw_export.
+1. **Инициализация схемы БД:**
+   ```bash
+   python neon/schema/init_schema.py
+   ```
+   Или выполните SQL файлы вручную в порядке: 001 → 002 → 003
+
+2. **ETL процесс:**
+   - Скрипты из `iiko/api/extract.py` загружают сырые данные в таблицы `iiko_raw_*`
+   - Скрипты из `google_sheets/load.py` загружают данные в таблицы `sheets_raw_*`
+
+3. **Обновление витрины:**
+   ```bash
+   python neon/transforms/run_transforms.py
+   ```
+   Или выполните `refresh_mart.sql` напрямую в БД
+
+4. **DataLens:**
+   - Подключается к Neon и строит датасеты и дашборды по витрине (`mart_*`)
+
+## Структура витрины
+
+### mart_daily_metrics
+
+Ежедневные метрики по торговым предприятиям (Домодедово/Авиагородок):
+- Выручка, % скидки, % себестоимости (из iiko)
+- Рекламный бюджет, ФОТ директ, ФОТ курьеры, ФОТ повара, ФОТ уборщицы (из Google Sheets)
+- Расчетные расходы: упаковка (2.8%), арору (1.4%), налоги (1.1%), эквайринг (0.8%)
+- Итоговая маржа (выручка - себестоимость - все расходы)
+
+### mart_hourly_load
+
+Нагрузка по часам (0-23) с разбивкой по дням и торговым предприятиям:
+- Количество заказов
+- Выручка
+
+### mart_discount_types
+
+Детализация по типам скидок:
+- Количество заказов со скидкой
+- Выручка с заказов со скидкой
+- Сумма скидки
+- Средний чек
