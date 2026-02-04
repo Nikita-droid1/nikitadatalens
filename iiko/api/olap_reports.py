@@ -51,19 +51,20 @@ def get_olap_report(
     # Для отчетов о продажах (Маржа, Нагрузка, Типы скидок) используем SALES
     # Название отчета должно точно совпадать с названием в iiko
     # Обязательно требуется фильтр "Учетный день (OpenDate.Typed)" в поле filters
-    # Для Jackson полиморфной десериализации нужен @class или правильный формат filterType
+    # filters должен быть объектом (LinkedHashMap), не массивом
+    # Для Jackson полиморфной десериализации нужен @class в каждом фильтре
     # Даты передаются как query параметры И в filters
     json_data = {
         "id": report_id,
         "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
-        "filters": [
-            {
+        "filters": {
+            "OpenDate.Typed": {
                 "@class": "resto.back.reports.olap.engine.DateFilterCriteria",
                 "filterType": "OpenDate.Typed",
                 "from": date_from_str,
                 "to": date_to_str
             }
-        ]
+        }
     }
     
     # Добавляем название отчета, если оно указано
