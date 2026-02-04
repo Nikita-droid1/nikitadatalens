@@ -12,6 +12,7 @@ def get_olap_report(
     report_id: str,
     date_from: datetime,
     date_to: datetime,
+    report_name: Optional[str] = None,
     token: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -48,11 +49,16 @@ def get_olap_report(
     # iiko Server API требует POST запрос с JSON телом
     # Согласно ошибке API, reportType должен быть одним из: STOCK, SALES, TRANSACTIONS, DELIVERIES
     # Для отчетов о продажах (Маржа, Нагрузка, Типы скидок) используем SALES
+    # Название отчета должно точно совпадать с названием в iiko
     # Даты передаются как query параметры
     json_data = {
         "id": report_id,
         "reportType": "SALES"  # Тип отчета: SALES для отчетов о продажах
     }
+    
+    # Добавляем название отчета, если оно указано
+    if report_name:
+        json_data["name"] = report_name
     
     # Токен и даты передаются как query параметры
     params = {
@@ -91,6 +97,7 @@ def get_margin_report(
         report_id="906ba511-1717-485c-aa60-2b47d03c49ec",
         date_from=date_from,
         date_to=date_to,
+        report_name="Маржа",
         token=token
     )
 
@@ -109,6 +116,7 @@ def get_load_orders_report(
         report_id="cd0c03aa-6ac8-433a-8d60-823d515ab968",
         date_from=date_from,
         date_to=date_to,
+        report_name="Нагрузка по часам (заказы)",
         token=token
     )
 
@@ -127,6 +135,7 @@ def get_load_revenue_report(
         report_id="6c37631c-5cc5-4644-b25e-3411a3492e37",
         date_from=date_from,
         date_to=date_to,
+        report_name="Нагрузка по часам (выручка)",
         token=token
     )
 
@@ -145,5 +154,6 @@ def get_discount_types_report(
         report_id="8ac9c323-034e-4b21-9eb6-60de5e05fbea",
         date_from=date_from,
         date_to=date_to,
+        report_name="Типы скидок",
         token=token
     )
