@@ -52,12 +52,14 @@ def get_olap_report(
     # Название отчета должно точно совпадать с названием в iiko
     # Обязательно требуется фильтр "Учетный день (OpenDate.Typed)" в поле filters
     # filters должен быть объектом (LinkedHashMap), а не массивом
+    # В объекте фильтра обязательно поле filterType
     # Даты передаются как query параметры
     json_data = {
         "id": report_id,
         "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
         "filters": {
             "OpenDate.Typed": {
+                "filterType": "OpenDate.Typed",
                 "from": date_from_str,
                 "to": date_to_str
             }
