@@ -50,10 +50,18 @@ def get_olap_report(
     # Согласно ошибке API, reportType должен быть одним из: STOCK, SALES, TRANSACTIONS, DELIVERIES
     # Для отчетов о продажах (Маржа, Нагрузка, Типы скидок) используем SALES
     # Название отчета должно точно совпадать с названием в iiko
+    # Обязательно требуется фильтр "Учетный день (OpenDate.Typed)" в поле filters
     # Даты передаются как query параметры
     json_data = {
         "id": report_id,
-        "reportType": "SALES"  # Тип отчета: SALES для отчетов о продажах
+        "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
+        "filters": [
+            {
+                "type": "OpenDate.Typed",
+                "from": date_from_str,
+                "to": date_to_str
+            }
+        ]
     }
     
     # Добавляем название отчета, если оно указано
