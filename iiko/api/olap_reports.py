@@ -57,24 +57,31 @@ def get_olap_report(
     # - DeletedWithWriteoff: FilterIncludeValuesCriteria (NOT_DELETED)
     # - Delivery.ServiceType: FilterIncludeValuesCriteria (COURIER, PICKUP)
     # - OrderDeleted: FilterIncludeValuesCriteria (NOT_DELETED)
+    # Фильтры для отчета "Маржа"
+    # Jackson использует filterType как type id для полиморфной десериализации
+    # Значение должно соответствовать имени, зарегистрированному в @JsonSubTypes
     filters = {
         "SessionID.OperDay": {
-            "filterType": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
+            "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
+            "filterType": "FilterDateRangeCriteria",
             "From": date_from_str,
             "To": date_to_str,
             "IncludeLow": True,
             "IncludeHigh": False
         },
         "DeletedWithWriteoff": {
-            "filterType": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "filterType": "FilterIncludeValuesCriteria",
             "DishDeletionStatus": "NOT_DELETED"
         },
         "Delivery.ServiceType": {
-            "filterType": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "filterType": "FilterIncludeValuesCriteria",
             "DeliveryType": ["COURIER", "PICKUP"]
         },
         "OrderDeleted": {
-            "filterType": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "filterType": "FilterIncludeValuesCriteria",
             "OrderDeletionStatus": "NOT_DELETED"
         }
     }
