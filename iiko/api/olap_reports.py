@@ -35,13 +35,14 @@ def get_olap_report(
     
     base = os.environ["IIKO_BASE_URL"].rstrip("/")
     
-    # Убеждаемся, что date_from - начало дня, date_to - конец дня
+    # Убеждаемся, что date_from - начало дня, date_to - начало следующего дня (IncludeHigh: False)
     date_from_start = date_from.replace(hour=0, minute=0, second=0, microsecond=0)
-    date_to_end = date_to.replace(hour=23, minute=59, second=59, microsecond=0)
+    date_to_start = date_to.replace(hour=0, minute=0, second=0, microsecond=0)
     
-    # Формат даты для iiko API: "01.01.2026 0:00:00" и "01.01.2026 23:59:59"
-    date_from_str = date_from_start.strftime("%d.%m.%Y %H:%M:%S")
-    date_to_str = date_to_end.strftime("%d.%m.%Y %H:%M:%S")
+    # Формат даты для iiko API: "01.02.2026 0:00:00" (без ведущего нуля в часах)
+    # Используем замену для удаления ведущего нуля в часах
+    date_from_str = date_from_start.strftime("%d.%m.%Y %H:%M:%S").replace(" 00:", " 0:")
+    date_to_str = date_to_start.strftime("%d.%m.%Y %H:%M:%S").replace(" 00:", " 0:")
     
     # Эндпоинт для получения OLAP отчета
     url = f"{base}/resto/api/v2/reports/olap"
@@ -50,11 +51,20 @@ def get_olap_report(
     # Согласно ошибке API, reportType должен быть одним из: STOCK, SALES, TRANSACTIONS, DELIVERIES
     # Для отчетов о продажах (Маржа, Нагрузка, Типы скидок) используем SALES
     # Название отчета должно точно совпадать с названием в iiko
-    # Даты передаются как query параметры (dateFrom, dateTo) - этого достаточно для фильтрации
-    # Поле filters не требуется, так как даты уже указаны в query параметрах
+    # Обязательно требуется фильтр для поля SessionID.OperDay с типом FilterDateRangeCriteria
     json_data = {
         "id": report_id,
-        "reportType": "SALES"  # Тип отчета: SALES для отчетов о продажах
+        "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
+        "filters": {
+            "SessionID.OperDay": {
+                "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
+                "filterType": "FilterDateRangeCriteria",
+                "From": date_from_str,
+                "To": date_to_str,
+                "IncludeLow": True,
+                "IncludeHigh": False
+            }
+        }
     }
     
     # Добавляем название отчета, если оно указано
