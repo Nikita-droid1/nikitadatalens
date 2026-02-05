@@ -36,8 +36,10 @@ def get_olap_report(
     base = os.environ["IIKO_BASE_URL"].rstrip("/")
     
     # Убеждаемся, что date_from - начало дня, date_to - начало следующего дня (IncludeHigh: False)
+    # Если запрашиваем 01.01.2026, то To должен быть 02.01.2026 0:00:00
+    from datetime import timedelta
     date_from_start = date_from.replace(hour=0, minute=0, second=0, microsecond=0)
-    date_to_start = date_to.replace(hour=0, minute=0, second=0, microsecond=0)
+    date_to_start = (date_to + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     
     # Формат даты для iiko API: "01.02.2026 0:00:00" (без ведущего нуля в часах)
     # Используем замену для удаления ведущего нуля в часах
