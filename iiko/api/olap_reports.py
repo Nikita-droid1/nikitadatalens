@@ -51,19 +51,37 @@ def get_olap_report(
     # Согласно ошибке API, reportType должен быть одним из: STOCK, SALES, TRANSACTIONS, DELIVERIES
     # Для отчетов о продажах (Маржа, Нагрузка, Типы скидок) используем SALES
     # Название отчета должно точно совпадать с названием в iiko
-    # Обязательно требуется фильтр для поля SessionID.OperDay с типом FilterDateRangeCriteria
+    # Фильтры для отчета "Маржа":
+    # - SessionID.OperDay: FilterDateRangeCriteria (обязательный)
+    # - DeletedWithWriteoff: FilterIncludeValuesCriteria (NOT_DELETED)
+    # - Delivery.ServiceType: FilterIncludeValuesCriteria (COURIER, PICKUP)
+    # - OrderDeleted: FilterIncludeValuesCriteria (NOT_DELETED)
+    filters = {
+        "SessionID.OperDay": {
+            "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
+            "From": date_from_str,
+            "To": date_to_str,
+            "IncludeLow": True,
+            "IncludeHigh": False
+        },
+        "DeletedWithWriteoff": {
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "DishDeletionStatus": "NOT_DELETED"
+        },
+        "Delivery.ServiceType": {
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "DeliveryType": ["COURIER", "PICKUP"]
+        },
+        "OrderDeleted": {
+            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
+            "OrderDeletionStatus": "NOT_DELETED"
+        }
+    }
+    
     json_data = {
         "id": report_id,
         "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
-        "filters": {
-            "SessionID.OperDay": {
-                "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
-                "From": date_from_str,
-                "To": date_to_str,
-                "IncludeLow": True,
-                "IncludeHigh": False
-            }
-        }
+        "filters": filters
     }
     
     # Добавляем название отчета, если оно указано
