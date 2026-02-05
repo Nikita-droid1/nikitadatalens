@@ -45,13 +45,23 @@ def main(date_from: Optional[datetime] = None, date_to: Optional[datetime] = Non
         # Загружаем данные из iiko API
         print("\n📊 Этап 1: Загрузка данных из iiko Server API")
         print("-" * 60)
-        run_iiko_etl(date_from, date_to)
+        try:
+            run_iiko_etl(date_from, date_to)
+            print("✅ Данные из iiko Server API загружены успешно")
+        except Exception as e:
+            print(f"❌ Ошибка при загрузке данных из iiko API: {e}")
+            raise
         
         # Загружаем данные из Google Sheets
         print("\n📊 Этап 2: Загрузка данных из Google Sheets")
         print("-" * 60)
         if os.environ.get("GOOGLE_SHEETS_CREDENTIALS"):
-            run_sheets_etl(date_from, date_to)
+            try:
+                run_sheets_etl(date_from, date_to)
+                print("✅ Данные из Google Sheets загружены успешно")
+            except Exception as e:
+                print(f"⚠️  Ошибка при загрузке данных из Google Sheets: {e}")
+                print("⚠️  Продолжаем выполнение без данных из Google Sheets")
         else:
             print("⚠️  GOOGLE_SHEETS_CREDENTIALS не установлена, пропускаем загрузку из Google Sheets")
         
@@ -59,7 +69,9 @@ def main(date_from: Optional[datetime] = None, date_to: Optional[datetime] = Non
         print("✅ ETL процесс завершен успешно")
         
     except Exception as e:
-        print(f"\n❌ Ошибка при выполнении ETL: {e}")
+        print(f"\n❌ Критическая ошибка при выполнении ETL: {e}")
+        import traceback
+        traceback.print_exc()
         raise
 
 
