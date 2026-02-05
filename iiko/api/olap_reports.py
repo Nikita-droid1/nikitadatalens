@@ -57,24 +57,11 @@ def get_olap_report(
     # - DeletedWithWriteoff: FilterIncludeValuesCriteria (NOT_DELETED)
     # - Delivery.ServiceType: FilterIncludeValuesCriteria (COURIER, PICKUP)
     # - OrderDeleted: FilterIncludeValuesCriteria (NOT_DELETED)
-    # Фильтры для отчета "Маржа"
-    # Jackson требует filterType как обязательное поле для полиморфной десериализации
-    # Используем только обязательный фильтр SessionID.OperDay
-    # filterType должен быть первым полем в объекте для правильной десериализации
-    filters = {
-        "SessionID.OperDay": {
-            "filterType": "FilterDateRangeCriteria",
-            "From": date_from_str,
-            "To": date_to_str,
-            "IncludeLow": True,
-            "IncludeHigh": False
-        }
-    }
-    
+    # Минимальный запрос без filters в теле - даты передаются через query параметры
+    # Если API требует filters, попробуем другой формат
     json_data = {
         "id": report_id,
-        "reportType": "SALES",  # Тип отчета: SALES для отчетов о продажах
-        "filters": filters
+        "reportType": "SALES"  # Тип отчета: SALES для отчетов о продажах
     }
     
     # Добавляем название отчета, если оно указано
