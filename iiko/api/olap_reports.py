@@ -58,11 +58,12 @@ def get_olap_report(
     # - Delivery.ServiceType: FilterIncludeValuesCriteria (COURIER, PICKUP)
     # - OrderDeleted: FilterIncludeValuesCriteria (NOT_DELETED)
     # Фильтры для отчета "Маржа"
-    # Jackson требует @class для полиморфной десериализации
-    # Используем только обязательный фильтр SessionID.OperDay для начала
+    # Jackson требует filterType как обязательное поле для полиморфной десериализации
+    # Используем только обязательный фильтр SessionID.OperDay
+    # filterType должен быть первым полем в объекте для правильной десериализации
     filters = {
         "SessionID.OperDay": {
-            "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
+            "filterType": "FilterDateRangeCriteria",
             "From": date_from_str,
             "To": date_to_str,
             "IncludeLow": True,
