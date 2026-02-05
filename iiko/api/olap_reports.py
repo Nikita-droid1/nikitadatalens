@@ -4,7 +4,7 @@
 import os
 import requests
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from .auth import get_token
 
 
@@ -37,7 +37,6 @@ def get_olap_report(
     
     # Убеждаемся, что date_from - начало дня, date_to - начало следующего дня (IncludeHigh: False)
     # Если запрашиваем 01.01.2026, то To должен быть 02.01.2026 0:00:00
-    from datetime import timedelta
     date_from_start = date_from.replace(hour=0, minute=0, second=0, microsecond=0)
     date_to_start = (date_to + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     
