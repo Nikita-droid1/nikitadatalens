@@ -58,7 +58,6 @@ def get_olap_report(
         "filters": {
             "SessionID.OperDay": {
                 "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
-                "filterType": "FilterDateRangeCriteria",
                 "From": date_from_str,
                 "To": date_to_str,
                 "IncludeLow": True,
