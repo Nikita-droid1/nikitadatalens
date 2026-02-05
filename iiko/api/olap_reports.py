@@ -58,7 +58,6 @@ def get_olap_report(
     # - OrderDeleted: FilterIncludeValuesCriteria (NOT_DELETED)
     filters = {
         "SessionID.OperDay": {
-            "@class": "resto.back.reports.olap.engine.FilterDateRangeCriteria",
             "filterType": "FilterDateRangeCriteria",
             "From": date_from_str,
             "To": date_to_str,
@@ -66,17 +65,14 @@ def get_olap_report(
             "IncludeHigh": False
         },
         "DeletedWithWriteoff": {
-            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
             "filterType": "FilterIncludeValuesCriteria",
             "DishDeletionStatus": "NOT_DELETED"
         },
         "Delivery.ServiceType": {
-            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
             "filterType": "FilterIncludeValuesCriteria",
             "DeliveryType": ["COURIER", "PICKUP"]
         },
         "OrderDeleted": {
-            "@class": "resto.back.reports.olap.engine.FilterIncludeValuesCriteria",
             "filterType": "FilterIncludeValuesCriteria",
             "OrderDeletionStatus": "NOT_DELETED"
         }
